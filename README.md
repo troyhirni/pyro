@@ -2,7 +2,7 @@
 Python Programming Library
 
     
-    Copyright 2015-2016 Troy Hirni
+    Copyright 2015-2017 Troy Hirni
     This file is part of the pyro project, distributed under
     the terms of the GNU Affero General Public License.
     
