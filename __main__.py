@@ -1,3 +1,13 @@
+"""
+Copyright 2014-2017 Troy Hirni
+This file is part of the pyro project, distributed under the terms 
+of the GNU Affero General Public License.
+
+** MAIN **
+
+USAGE: 
+python -m %s --clean [path] # clean out *.pyc files
+"""
 
 import sys
 from . import *
@@ -16,7 +26,7 @@ if __name__ == '__main__':
 	elif cmd == '--args':
 		print (str(sys.argv))
 	
-	# print the arguments received by this call
+	# print the inner-path for python imports within the package
 	elif cmd == '--ipath':
 		print ("%s" % (Base.innerpath(*args)))
 	
@@ -25,9 +35,10 @@ if __name__ == '__main__':
 		d = Base.ncreate('fs.dir.Dir', *args[1:])
 		d.find('.', '*.pyc', fn=d.rm)
 	
+	"""
 	# prompt demo
 	elif cmd == '--prompt':
 		d = Base.ncreate(args[0], *args[1:])
 		p = Base.ncreate('intf.prompt.Prompt', d)
 		p.prompt()
-
+	"""

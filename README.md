@@ -1,4 +1,4 @@
-# pyro
+# pyro v0.0.1
 Python Programming Library
 
     
@@ -32,19 +32,3 @@ here on github in a separate project based on pyro. The development of pyro
 will also continue separately. Any updates to pyro will (sooner or later) 
 be reflected in aimy, and any needs discovered in the development of aimy 
 will help determine the course of pyro's development.
-
-## First Steps
-The first task is to carefully document and debug certain modules (starting 
-with base.__init__) from the [pyrox](https://github.com/troyhirni/pyrox/wiki) 
-project as they're imported to pyro. Not everything that's in pyrox will 
-be imported to pyro - much of it is currently either unreliable, too slow, 
-or likely to change significantly.
-
-## Notes
-
-* Version specifications will consist of three positive dot-separated  
-integers. The format is major.minor.dev; For example: assuming no major 
-or minor release, the tenth development release will be version 0.0.10
-
-* Development in pyrox will continue at least for a while, and may result 
-in significant changes to pyro while pyro's development version remains 0.0.x
