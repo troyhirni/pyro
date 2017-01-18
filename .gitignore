@@ -60,3 +60,15 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+
+
+# --------- added by me (i think) ---------
+
+*.db
+*.pyc
+__pycache__/
+__pycache__
+wiki/
+wiki
+
