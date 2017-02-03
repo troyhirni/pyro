@@ -11,6 +11,16 @@ Debugging -	Call dev.debug() to turn on an exception that displays
 """
 
 
+# easier to reload
+try:
+	reload
+except:
+	try:
+		from importlib import reload
+	except:
+		from imp import reload
+
+
 # REM: .fmt imports sys, json, traceback (some through pyro.*)
 #import sys, json, traceback
 from .fmt import *
