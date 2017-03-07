@@ -1,4 +1,4 @@
-# pyro v0.0.1
+# pyro v0.0.2
 Python Programming Library
 
     
@@ -20,6 +20,9 @@ Python Programming Library
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
 
+
+## about pyrox
+
 The pyro project is a python programming library built on a significant 
 reorganization of code from the [aimy](http://aimy.sourceforge.net/) 
 project, previously developed on sourceforge.net. The plan is to reorganize 
@@ -32,3 +35,16 @@ here on github in a separate project based on pyro. The development of pyro
 will also continue separately. Any updates to pyro will (sooner or later) 
 be reflected in aimy, and any needs discovered in the development of aimy 
 will help determine the course of pyro's development.
+
+
+
+## update
+
+This version adopts the great improvements from pyrox.fs; csv and tfile
+objects now perform much more smoothly across python 2 and 3, the file
+wrappers are more consistent in calling conventions, and the directory
+class Dir has added features to make opening files much easier. The
+data.pdq module has regressed a bit in preparation for sharing the
+param module classes between Query and other classes soon to come, but
+it's still a great way to explore and manipulate file data. The format
+and Base classes have remained largely the same.

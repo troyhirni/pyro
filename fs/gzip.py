@@ -1,22 +1,18 @@
 """
 Copyright 2016-2017 Troy Hirni
-This file is part of the pyro project, distributed under
+This file is part of the pyrox project, distributed under
 the terms of the GNU Affero General Public License.
 
 GZIP - Covers gzip files.
 
-
-
-
-
 """
 
-from .file import *
+
+from .bfile import *
 
 
-
-class Gzip(File):
-	"""Gzip file support; EXPERIMENTAL."""
+class Gzip(ByteFile):
+	"""Gzip file support."""
 	@property
 	def gzfactory(self):
 		try:
@@ -26,9 +22,7 @@ class Gzip(File):
 			return self.__gzfactory
 	
 	def open(self, mode='rb', **k):
-		return self.gzfactory(self.path, mode, **k)
-
-
-
+		ok = Base.kcopy(k, 'mode compresslevel fileobj mtime')
+		return self.gzfactory(self.path, mode, **ok)
 
 

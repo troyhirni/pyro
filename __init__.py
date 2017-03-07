@@ -5,64 +5,77 @@ of the GNU Affero General Public License.
 
 PYRO
 
-This package is intended to provide support for python application
-and script development and to be a helpful utility in an interpreter
-or from the command line, and to work - at least to some degree - in
-python version 2 and 3. It's the experimental playground for the pyro
-project.
-
-PYTHON 2/3 COMPATABILITY NOTES
-The code here does a lot to help your scripts run in both python 2
-and 3, but only if you `import *` from this module. Note that all
-subpackages and modules import * from this module.
-
-Here are some more 2/3 compatability tips:
- * Use the string class names as provided by python 2 - basestring, 
-   unicode, and str. In python 3, they all are the same class, str,
-   so they'll work as expected in either major version.
- * Use unichr even in 3 - it's defined (only in python 3) as chr, but
-   this module defines unichr=chr for python 3 so that the code will
-   work in python 2.
-
-COMMAND LINE USE
-Currently, there's not much available for use from the command line,
-but there are several packages and modules under construction which
-will be very useful from the command line.
-
-Useful command line features:
- $ python -m pyro --clean
+Support for python application and script development; a helpful 
+utility for interpreter and command line. Should work for python 
+versions later than 2.4; tested in python 2.7 and 3.5.2.
 
 """
 
+
+#
+# REMEMBER!
+#  - Set to True for development, False for release versions.
+#  - It is OK to set this to True - it won't hurt anything; it's
+#    just that less code is automatically loaded when it's False.
+#
+AUTO_DEBUG = False
+
+
+# imports needed by this module
 import os, sys, time, traceback
 
+
+# common python 2/3 typedefs
 try:
 	basestring
+	try:
+		unichr(0x10FFFF) # check wide support
+	except:
+		import struct
+		def unichr (i):
+			return struct.pack('i', i).decode('utf-32')
 except:
 	basestring = unicode = str
 	unichr = chr
+	if AUTO_DEBUG:
+		try:
+			from importlib import reload
+		except:
+			from imp import reload
 
 
-# REM: Set to True for development, False for release versions.
-AUTO_DEBUG = True
+# This supports python versions before 2.6 when the bytes type was 
+# introduced; The value is used in support of python 3, to check 
+# whether decoding has been applied in situations where results may
+# be (unicode) strings or byte strings.
+try:
+	pxbytes = bytes
+except:
+	# this only happens pre-version 2.6
+	pxbytes = str
 
 
+
+# default global values
 DEF_INDENT = 2
 DEF_ENCODE = 'utf_8'
 
 
 
 #
-# BASE - A base for non-utility classes
+# BASE - Basic Pyro Operations
 #
 class Base(object):
+	"""
+	A basic set of package-support classmethods.
+	"""
 	
 	@classmethod
 	def config(cls, *a, **k):
 		try:
 			return cls.__TConfig(*a, **k)
 		except:
-			cls.__TConfig = TFactory(cls.innerpath('fs.config.Config')).type
+			cls.__TConfig=TFactory(cls.innerpath('fs.config.Config')).type
 			return cls.__TConfig(*a, **k)
 	
 	@classmethod
@@ -86,7 +99,7 @@ class Base(object):
 		
 		# Create and return the object described by conf.
 		return Factory(conf, *a, **k).create()
-	
+		
 	@classmethod
 	def innerpath(cls, innerPath=None):
 		"""
@@ -115,11 +128,28 @@ class Base(object):
 	
 	@classmethod
 	def path(cls, *a, **k):
+		"""
+		Return a new fs.Path object with given args and kwargs.
+		"""
 		try:
 			return cls.__TPath(*a, **k)
 		except:
 			cls.__TPath = TFactory(cls.innerpath('fs.Path')).type
 			return cls.__TPath(*a, **k)
+	
+	@classmethod
+	def kcopy(cls, obj, keys):
+		"""
+		This method creates a subset of dict keys in order to select only
+		desired (or allowed) keyword args before passing to functions and
+		methods. Argument `keys` may be passed as a space-separated
+		string or as a list of dict keys (if you need non-string keys).
+		"""
+		try:
+			keys=keys.split()
+		except:
+			pass
+		return dict([[k,obj[k]] for k in keys if k in obj])
 
 
 
@@ -382,3 +412,5 @@ def debug(debug=True, showtb=True):
 
 if AUTO_DEBUG:
 	debug()
+
+

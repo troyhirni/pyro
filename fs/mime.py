@@ -1,18 +1,19 @@
 """
 Copyright 2016-2017 Troy Hirni
-This file is part of the pyro project, distributed under the terms
+This file is part of the pyrox project, distributed under the terms
 of the GNU Affero General Public License.
 
 MIME - Utility for finding file types and the fs object to open them
 
 Mime is a one-time-use object in which all values are set in the
 constructor. Properties make results available.
-
-   UNDER CONSTRUCTION! - This module is under construction!
 """
 
 from .. import *
+
 import mimetypes
+
+
 
 class Mime(object):
 	def __init__(self, url, strict=False):
@@ -46,7 +47,7 @@ class Mime(object):
 	
 	@property
 	def mimetype(self):
-		return self.__mimetype
+		return self.__mimet
 	
 	@property
 	def enc(self):
@@ -63,27 +64,7 @@ class Mime(object):
 	@property
 	def subtype(self):
 		return self.__subtype
-	
-	def file(self, **k):
-		
-		# set this object as a keyword argument
-		k['mime']=self
-		
-		# application is zip or tar
-		if self.__type == 'application':
-			if self.__subtype == 'zip':
-				return Base.ncreate('fs.zip.Zip', self.__url, **k)
-			elif self.__subtype == 'x-tar':
-				return Base.ncreate('fs.tar.Tar', self.__url, **k)
-		
-		# gzip encoded
-		elif self.__enc == 'gzip':
-			return Base.ncreate('fs.gzip.Gzip', self.__url, **k)
-		
-		# gzip encoded
-		elif self.__enc == 'bzip2':
-			return Base.ncreate('fs.bzip.Bzip', self.__url, **k)
-		
-		# last resort: any kind of file
-		return Base.ncreate('fs.file.File', self.__url, **k)
+
+
+
 

@@ -1,6 +1,6 @@
 """
 Copyright 2016-2017 Troy Hirni
-This file is part of the pyro project, distributed under the terms
+This file is part of the pyrox project, distributed under the terms
 of the GNU Affero General Public License.
 
 TABLE - Display a list's items in a tabulated grid.

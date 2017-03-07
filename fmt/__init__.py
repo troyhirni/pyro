@@ -1,14 +1,14 @@
 """
 Copyright 2016-2017 Troy Hirni
-This file is part of the pyro project, distributed under the terms
+This file is part of the pyrox project, distributed under the terms
 of the GNU Affero General Public License.
 
 FMT - Text formatting objects with conversion settings.
 
-Use format-based objects as functions that are ready to provide the
-customized formatting you need repeatedly. Call the output() method 
-to print given text (after formatting) to the terminal. Use the 
-format() method if you need the formatted text returned as a string.
+Format-based objects store formatting parameters and use them to
+return or output formatted text for data given to the `format()` or
+`output()` methods.
+
 """
 
 from .. import *
@@ -27,12 +27,6 @@ class FormatBase(object):
 	a formatter because it has no format() method, but facilitates the
 	storage of arguments and keyword args for use when subclasses are
 	called to format text.
-	
-	Use FormatBase-based objects as functions that are ready to provide
-	the customized formatting you need repeatedly. Call the output()
-	method to print given text (after formatting) to the terminal. Use
-	the format() method if you need the formatted text returned as a
-	string.
 	"""
 	
 	def __init__(self, *a, **k):
@@ -69,12 +63,12 @@ class NoFormat(FormatBase):
 	Formatter that does not format; Prints or returns "as-is" string.
 	"""
 	
-	def __call__(self, a, **k):
-		"""Formats and returns data."""
+	def __call__(self, data, **k):
+		"""Return `data` cast as a string."""
 		return str(a) if a else ''
 	
-	def output(self, *a, **k):
-		"""Format and print data."""
+	def output(self, data):
+		"""Print `data`."""
 		print (a)
 
 
@@ -95,10 +89,19 @@ class Format(FormatBase):
 		When passed text, this object's format() method will convert it
 		to
 		"""
-		FormatBase.__init__(self, formatString)
+		FormatBase.__init__(self)
+		self.__formatstr = formatString
+	
 	
 	def format(self, *a, **k):
-		return self.args[0].format(*a, **k)
+		"""
+		Pass args and kwargs - the values to be formatted into the format
+		method of the `formatString` given to the constructor.
+		
+		f = Format('{0}, {1}, {2}')
+		print (f.format('a', 'b', 'c'))
+		"""
+		return self.self.__formatstr.format(*a, **k)
 
 
 
@@ -157,8 +160,6 @@ class JCompact(JSON):
 
 
 
-
-
 #
 # JSON JSONEncoder
 #  - The pyro module makes extensive use of json data formatting.
@@ -171,7 +172,13 @@ class JSONDisplay(json.JSONEncoder):
 	"""
 	def default(self, obj):
 		try:
-			return json.JSONEncoder.default(self, obj)
-		except TypeError:
-			return repr(obj)
+			try:
+				return json.JSONEncoder.default(self, obj)
+			except Exception:
+				try:
+					return repr(obj)
+				except:
+					return "<%s>" % obj.__class__.__name__
+		except:
+			raise
 

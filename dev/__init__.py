@@ -1,6 +1,6 @@
 """
 Copyright 2014-2017 Troy Hirni
-This file is part of the pyro project, distributed under
+This file is part of the pyrox project, distributed under
 the terms of the GNU Affero General Public License.
 
 DEV - Development-only tools
@@ -11,19 +11,8 @@ Debugging -	Call dev.debug() to turn on an exception that displays
 """
 
 
-# easier to reload
-try:
-	reload
-except:
-	try:
-		from importlib import reload
-	except:
-		from imp import reload
+from ..fmt import *
 
-
-# REM: .fmt imports sys, json, traceback (some through pyro.*)
-#import sys, json, traceback
-from .fmt import *
 
 
 def debug(debug=True, showtb=False):
@@ -36,19 +25,30 @@ def debug(debug=True, showtb=False):
 	Debug().debug(debug, showtb)
 
 
+
 def debug_hook(t,v,tb):
 	try:
 		raise v
-	except BaseException as v:
+	except Exception as v:
 		try:
 			print (repr(type(v)))
-			print (json.dumps(
-				v.args, cls=JSONDisplay, indent=JSON_INDENT, 
-				sort_keys=True
+			print (json.dumps( v.args, 
+				sort_keys = True,
+				indent    = DEF_INDENT, 
+				cls       = JSONDisplay
 			))
 			if Debug.showtb():
 				print ("Traceback:")
 				traceback.print_tb(tb)
+		
+		except UnicodeDecodeError as uex:
+			print ("Unicode Error")
+			for x in uex.args:
+				print (x)
+			if Debug.showtb():
+				print ("Traceback:")
+				traceback.print_tb(tb)
+		
 		except BaseException as ex:
 			print ("WARNING: DEBUG HOOK FAILED!")
 			try:

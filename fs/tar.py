@@ -1,46 +1,32 @@
 """
 Copyright 2016-2017 Troy Hirni
-This file is part of the pyro project, distributed under
+This file is part of the pyrox project, distributed under
 the terms of the GNU Affero General Public License.
 
-TAR - Covers tar files.
-
-The Tar class is currently read-only.
+TAR - Tar file wrapper.
 """
+
 
 import tarfile, fnmatch
 from .file import *
 
 
-class Tar(File):
-	"""Tar file support; EXPERIMENTAL."""
-	
-	def __init__(self, path, **k):
-		File.__init__(self, path, **k)
-		self.__innerdir = '/' #X
-	
-	# OPEN TAR FILE
-	def open(self, mode="r", **k):
-		"""Open the tarfile; return the TarFile object."""
-		return tarfile.open(self.path, mode="r", **k)
-	
-	def ls(self):
-		return self.names
+class Tar(MemberFile):
+	"""Tar file support."""
 	
 	@property
 	def names(self):
+		"""EXPERIMENTAL"""
 		try:
 			return self.__names
 		except:
-			self.__loadnames()
+			with self.open('r|*') as f:
+				self.__names = f.getnames()
 			return self.__names
 	
-	def __loadnames(self):
-		with self.open('r|*') as f:
-			self.__names = f.getnames()
-
 	@property
 	def members(self):
+		"""EXPERIMENTAL"""
 		try:
 			return self.__members
 		except:
@@ -55,8 +41,12 @@ class Tar(File):
 				rr[m.name] = m
 		self.__members = rr
 	
-	def memberinfo(self, name):
+	
+	
+	def memberinfo(self):
 		"""
+		EXPERIMENTAL
+		
 		Return a dict with member names as keys; each value is a dict 
 		containing information on the corresponding member.
 		"""
@@ -67,41 +57,100 @@ class Tar(File):
 			with self.open('r|*') as f:
 				mm = f.getmembers()
 				for m in mm:
-					rr[name] = dict(
-						size = m.size,
-						mtime = m.mtime,
-						mode = m.mode,
-						type = m.type,
-						linkname = m.linkname,
-						uid = m.uid,
-						gid = m.gid,
-						uname = m.uname,
-						gname = m.gname,
-						pax = m.pax_headers	
-					)
+					try:
+						rr[m.name] = dict(
+							name = m.name,
+							size = m.size,
+							mtime = m.mtime,
+							mode = m.mode,
+							type = m.type,
+							linkname = m.linkname,
+							uid = m.uid,
+							gid = m.gid,
+							uname = m.uname,
+							gname = m.gname #,pax = m.pax_headers	
+						)
+					except:
+						raise
+						
 			self.__meminfo = rr
 			return rr
+
+	
+	# OPEN TAR FILE
+	def open(self, mode="r", **k):
+		"""Open the tarfile; return the TarFile object."""
+		try:
+			return tarfile.open(self.path, mode, **k)
+		except Exception as ex:
+			raise type(ex)('tar-open-fail', xdata(path=self.path, k=k, 
+					mode=mode,exists=self.exists(), mime=self.mime.guess
+				))
 	
 	
-	# DIR-LIKE  #X
-	def filter(self, pattern):
-		return fnmatch.filter(self.names, pattern)
+	# READING
+	def read(self, member, **k):
+		"""
+		Return bytes of the given member.
+		"""
+		k['member'] = member
+		
+		# REM: The reader method separates the kwargs (ek from k) and
+		#      lets it's read method handle encoding, if specified.
+		r = self.reader(**k) 
+		return r.read()
 	
 	
-	# FILE-LIKE
-	def read(self, member, mode='r'):
-		return self.reader(member, mode).read()
+	# WRITE
+	def write(self, member, data, mode="w", **k):
+		
+		# create tarinfo object
+		mem = tarfile.TarInfo(member)
+		mem.size = len(data)
+		
+		# always encode to bytes if encoding is provided
+		ek = self.extractEncoding(k)
+		if ek:
+			data = data.encode(**ek)
+		
+		# create a stream
+		try:
+			strm = Base.create('io.BytesIO', data)
+		except Exception:
+			# for early python 2
+			strm = Base.create('cStringIO.StringIO', data)
+		
+		# add the member
+		with self.open(mode) as fp:
+			fp.addfile(mem, strm)
 	
-	def reader(self, member, mode='r'):
-		return Reader(self.open(mode).extractfile(member))
 	
-	def writer(self, *a):
-		raise NotImplementedError()
+	# READER
+	def reader(self, **k):
+		"""
+		Return a `Reader` object for `member`. If reading unicode, an 
+		`encoding` keyword must be specified so that the data can be 
+		decoded to unicode.
+		"""
+		ek = self.extractEncoding(k)
+		if 'stream' in k:
+			return Reader(**ek)
+		elif 'member' in k:
+			mode = k.get('mode', 'r')
+			member = k['member']
+			return Reader(self.open(mode).extractfile(member), **ek)
+		else:
+			raise ValueError('create-reader-fail', xdata( k=k, ek=ek,
+				reason='missing-required-arg', requires=['stream','member'],
+				detail=self.__class__.__name__
+			))
 	
-	def write(self, *a):
-		raise NotImplementedError()
+	
+	# WRITER - Maybe someday... maybe soon :-)
+	def writer(self, *a, **k):
+		raise NotImplementedError('maybe-someday')
 
 
 
-
-
+	
+	

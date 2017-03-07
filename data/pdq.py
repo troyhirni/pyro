@@ -16,11 +16,11 @@ current data in various formats, and fmt() is available to help you
 format (or output) the data in various other ways. The data property
 returns the data itself, or lets you completely reset the data. There
 is even a one-time undo() method in case you get unexpected results.
+Calling undo() repeatedly toggles self.data between the previous and
+current values.
 
-Keyword args 'file' and 'gzip' let you specify a text or gzip file
-to import as string data. Use Query.splitlines() to split the data
-into a list of lines. Use Query.update() to split individual lines
-into lists. For example:
+Use keyword arg `file` to specify a text file to import as string 
+data.
 
 # EXAMPLE:
 import pdq
@@ -28,23 +28,25 @@ q = pdq.Query(file="space-separated-values.txt", encoding='ascii')
 q.splitlines()
 q.update(lambda o: o.v.split())
 
-# EXAMPLE 2 - a quick way to get a table full of integers
-from ..data import rand
-rowct = 7 # row count
-fldct = 6 # field count
-intsz = 5 # integer length
-q = pdq.Query([list(rand.randgen(fldct, rand.randi, intsz))
-	for x in range(0,rowct)])
+The `file` path's mime type determines the type of reader to be
+returned, so `file` may specify gzip, bzip, etc..
 
-# EXAMPLE 2 NOTES:
-#  - Change 'rand.randi' to .randf for floats;
-#  - You can use a lambda instead of rand.randi;
+If reading from a zip or tar file, use the `member` keyword to 
+specify the file within the archive.
+
+When specfiying a csv file, rows are read from the file as lists of
+string values.
+
+# EXAMPLE:
+import pdq
+q = pdq.Query(file="myarchive.zip", member="some.csv")
+q.peek()
 """
 
 from .param import *
 
 
-class Query(Base):
+class Query(object):
 	def __init__(self, data=None, **k):
 		"""
 		Argument 'data' can be text, bytes, or a python list. If data
@@ -54,11 +56,16 @@ class Query(Base):
 		produce encoded byte strings.
 		
 		Additional kwargs:
-		 - file : load text from a file; supports text, zip, bzip2, gzip,
-		          and tar files
-		 - name : zip and tar files require a name kwarg to identify the
-		          item within the file to read
-		 - row  : a custom row type may be specified to replace QRow
+		 - row    : a custom row type may be specified to replace QRow
+		 
+		Additional kwarg sets:
+		 * stream
+		   - stream  : any object with a read() method that will read its
+		               contents into the Query object's data.
+		 * file (and member, if applicable)
+		   - file    : load text from a file; supports all file wrappers.
+		   - member  : zip and tar files require a `member` kwarg to 
+		               identify the item within the file to read
 		"""
 		# encoding; used only if data is text
 		self.__encoding = k.get('encoding', None)
@@ -71,18 +78,15 @@ class Query(Base):
 		
 		# allow reading of text or gzip files
 		if 'file' in k:
-			mm = Base.ncreate('fs.mime.Mime', k['file'])
-			f = mm.file()
-			if not f:
-				raise Exception('file-not-created')
-			self.__file = f
-			self.__name = n = k.get('name')
-			self.__data = f.read(n) if n else f.read()
+			reader = Base.path(k.pop('file')).reader(**k)
+			self.__data = reader.read()
+		elif 'stream' in k:
+			self.__data = k['stream'].read()
 		else:
 			self.__data = data
 		
-		# decode to unicode string
-		if self.__encoding:
+		# if 'encoding' is specified, decode bytes only
+		if self.__encoding and isinstance(self.__data, pxbytes):
 			self.__data = self.__data.decode(self.__encoding)
 		
 		# prep undo
@@ -90,12 +94,6 @@ class Query(Base):
 	
 	def __getitem__(self, key):
 		return self.data[key]
-	
-	
-	@property
-	def file(self):
-		"""Return file, if one was specified to the constructor."""
-		return self.__file
 	
 	
 	@property
@@ -249,13 +247,37 @@ class Query(Base):
 
 
 
-class QRow(ParamData):
+class QRow(Param):
 	"""
 	The parameter object passed to callback functions/lambdas.
 	"""
+	
+	@classmethod
+	def paramgen(cls, data, caller, *a, **k):
+		if isinstance(data, (list, set, tuple)):
+			return cls.pgseq(data, caller, *a, **k)
+		elif isinstance(data, dict):
+			return cls.pgdict(data, caller, *a, **k)
+		
+	@classmethod
+	def pgseq(cls, data, caller, *a, **k):
+		where = k.get('where')
+		for i,v in enumerate(data):
+			x = cls(caller, v, i, *a, **k)
+			if (not where) or where(x):
+				yield x
+			
+	@classmethod
+	def pgdict(cls, data, caller, *a, **k):
+		where = k.get('where')
+		for key in data.keys():
+			x = cls(caller, data[key], key, *a, **k)
+			if (not where) or where(x):
+				yield x
+
 	def __init__(self, query, value, item, *a, **k):
-		ParamData.__init__(self, query, value, item, *a, **k)
-		self.q = query # same as self.c
+		Param.__init__(self, value, item)# no args/kwargs! #, *a, **k)
+		self.q = query
 	
 	def qq(self, v=None, **k):
 		"""

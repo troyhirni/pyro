@@ -1,6 +1,6 @@
 """
 Copyright 2016-2017 Troy Hirni
-This file is part of the pyro project, distributed under the terms
+This file is part of the pyrox project, distributed under the terms
 of the GNU Affero General Public License.
 
 GRID - Display a list of lists (of equal length) in a grid.
@@ -89,10 +89,18 @@ class List(Grid):
 	numbered rows.
 	"""
 	def format(self, dataList, **k):
-		i = 1
+		start = k.get('start', 1)
+		i = start
 		flist = []
-		for x in dataList:
-			flist.append([i, x])
-			i += 1
+		title = k.get('title')
+		if title:
+			for x in dataList:
+				flist.append([title(i), x])
+				i += 1
+		else:
+			for x in dataList:
+				flist.append([i, x])
+				i += 1
+		
 		return Grid.format(self, flist, **k)
 
